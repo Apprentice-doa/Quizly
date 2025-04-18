@@ -30,7 +30,8 @@ quiz_generation_tool = {
                             "properties": {
                                 "question_text": {"type": "string"},
                                 "options": {"type": "array", "items": {"type": "string"}, "minItems": 4, "maxItems": 4},
-                                "correct_answer": {"type": "string"}
+                                "correct_answer": {"type": "string"},
+                                "explanation": {"type": "string"}
                             },
                             "required": ["question_text", "options", "correct_answer"]
                         },
@@ -44,7 +45,34 @@ quiz_generation_tool = {
 }
 
 def generate_quiz_with_tool_calling(params: QuizParams):
-    system_prompt = f"Generate {params.num_questions} multiple-choice questions about {params.description} with a difficulty level of {params.difficulty}. Each question should have exactly 4 options. Please use the 'generate_quiz_data' tool to format the output."
+    system_prompt = f"""Generate {params.num_questions} multiple-choice questions about {params.description} with a difficulty level of {params.difficulty}. Each question should have exactly 4 options. Please use the 'generate_quiz_data' tool to format the output.
+    You are a quizbot that provides multiple-choice questions, answers, and explanations to users based on the context provided. The goal is to help users understand the concepts by presenting questions of varying difficulty levels.
+
+Guidelines:
+The questions should be relevant to the context and test the user's understanding of the material.
+Difficulty Levels:
+
+Level 1 (Very Easy): The question should be straightforward and simple, with easy options. The explanation should be very simplified, focusing on the basic concept.
+
+Level 2 (Easy): The question should be easy but implicit, requiring a bit more thought to answer. The options should also be easy but slightly more nuanced. The explanation should be more complex and go a bit deeper into the concept.
+
+Level 3 (Medium): The question should require some understanding of the topic and be more implicit in nature. The options should provide close alternatives. The explanation should involve practical application or deeper insights into the topic.
+
+Level 4 (Hard): The question should be challenging, requiring a strong understanding of the topic. The options should be distinct but tricky. The explanation should go into detail, possibly covering edge cases or advanced concepts.
+
+Level 5 (Very Hard): The question should be highly complex, possibly involving advanced techniques, theory, or application. The options should be sophisticated and require careful thought. The explanation should dive into advanced concepts, assumptions, and practical considerations.
+
+Output Format:
+You must use the tool "generate_quiz_questions" to return your response. 
+The tool requires a list of questions, where each question is a dictionary containing:
+•⁠  ⁠"question": The question text
+•⁠  ⁠"options": A list of 4 options labeled as strings "A", "B", "C", and "D" (not including the letter labels in the option text)
+•⁠  ⁠"answer": The correct option letter ("A", "B", "C", or "D")
+•⁠  ⁠"explanation": A brief explanation of why the answer is correct
+
+All explanations should be clear and concise, helping the user understand the concept better, not more than a sentence or two
+    
+"""
     try:
         message = {
                 "role": "user",
@@ -82,8 +110,9 @@ def generate_quiz_with_tool_calling(params: QuizParams):
                     quiz_id = str(uuid.uuid4())
                     questions = [{"question": q['question_text'], "options": q['options']} for q in generated_questions_data]
                     correct_answers = [q['correct_answer'] for q in generated_questions_data]
-                    quiz_storage[quiz_id] = {"questions_data": generated_questions_data, "correct_answers": correct_answers}
-                    return {"quiz_id": quiz_id, "questions": questions, "correct_answers": correct_answers}
+                    explanations = [q['explanation'] for q in generated_questions_data]
+                    quiz_storage[quiz_id] = {"questions_data": generated_questions_data, "correct_answers": correct_answers, "explanations": explanations}
+                    return {"quiz_id": quiz_id, "questions": questions, "correct_answers": correct_answers, "explanations": explanations}
                 else:
                     raise HTTPException(status_code=500, detail="Generated number of questions does not match the request.")
             else:
@@ -125,4 +154,4 @@ async def get_answers(quiz_id: str):
     quiz_data = quiz_storage.get(quiz_id)
     if not quiz_data:
         raise HTTPException(status_code=404, detail="Quiz not found")
-    return {"correct_answers": quiz_data["correct_answers"]}
+    return {"correct_answers": quiz_data["correct_answers"], "explanations": quiz_data["explanations"]}

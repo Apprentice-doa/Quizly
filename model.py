@@ -14,6 +14,7 @@ class GeneratedQuizResponse(BaseModel):
     quiz_id: str
     questions: List[GeneratedQuestion]
 
+    
 class SubmitAnswerRequest(BaseModel):
     quiz_id: str
     user_answers: List[str]  # List of selected options
@@ -24,3 +25,6 @@ class ScoreResponse(BaseModel):
 
 class CorrectAnswersResponse(BaseModel):
     correct_answers: List[str]
+    explanations: List[str]
+
+
