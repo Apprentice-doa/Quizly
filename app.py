@@ -1,4 +1,5 @@
 import streamlit as st
+import string
 import requests
 from streamlit_router import StreamlitRouter
 
@@ -30,7 +31,7 @@ if 'num_questions' not in st.session_state:
     st.session_state['num_questions'] = 5
 
 def generate_quiz_page(router):
-    st.header("Quizly 📚")
+    st.title("Quizly 📚")
     st.session_state['quiz_description'] = st.text_input("Enter the topic for the quiz:", key="quiz_description_input")
     st.session_state['difficulty_level'] = st.selectbox("Select difficulty level:", ["Easy", "Medium", "Hard", "Very Hard"], key="difficulty_select")
     st.session_state['num_questions'] = st.number_input("Number of questions:", min_value=1, max_value=10, value=st.session_state['num_questions'], step=1, key="num_questions_input")
@@ -63,8 +64,9 @@ def quiz_page(router):
         for i, question_item in enumerate(st.session_state['questions']):
             question = question_item['question']
             options = question_item['options']
+            labeled_options = [f"{letter}. {option}" for letter, option in zip(string.ascii_uppercase, options)]
             st.write(f"**{question}**")
-            st.session_state['user_answers'][i] = st.radio(f"Select your answer for question {i+1}", options, index= None, key=f"q_{i}")
+            st.session_state['user_answers'][i] = st.radio(f"Select your answer for question {i+1}", labeled_options, index= None, key=f"q_{i}")
 
         if st.button("Submit Answers"):
             try:
@@ -104,10 +106,10 @@ def quiz_page(router):
                     st.markdown(f"### Question {i+1}")
                     st.markdown(f"**{question}**")
 
-                    if user_answer == correct_answer:
-                        st.success(f"✅ You answered correctly: {user_answer}")
+                    if user_answer.split('.')[0].strip() == correct_answer:
+                        st.success(f"✅ You answered correctly: {user_answer.split('.')[0].strip() if user_answer else 'None'}")
                     else:
-                        st.error(f"❌ Your answer: {user_answer}")
+                        st.error(f"❌ Your answer: {user_answer.split('.')[0].strip() if user_answer else 'None'}")
                         st.success(f"✅ Correct Answer: {correct_answer}")
 
                     st.info(f"🧠 Explanation: {explanation}")

@@ -30,7 +30,7 @@ quiz_generation_tool = {
                             "properties": {
                                 "question_text": {"type": "string"},
                                 "options": {"type": "array", "items": {"type": "string"}, "minItems": 4, "maxItems": 4},
-                                "correct_answer": {"type": "string"},
+                                "correct_answer": {"type": "string", "enum": ["A", "B", "C", "D"]},
                                 "explanation": {"type": "string"}
                             },
                             "required": ["question_text", "options", "correct_answer"]
@@ -135,16 +135,21 @@ async def submit_quiz(request: SubmitAnswerRequest):
         raise HTTPException(status_code=404, detail="Quiz not found")
 
     correct_answers = quiz_data["correct_answers"]
+    print(correct_answers)
     user_answers = request.user_answers
+    print(user_answers)
 
     if len(user_answers) != len(correct_answers):
         raise HTTPException(status_code=400, detail="Number of answers does not match the number of questions.")
 
     score = 0
     for i in range(len(correct_answers)):
+        user_answer_raw = user_answers[i]
         # We need to find the correct answer within the options for comparison
+        user_answer = user_answer_raw.split('. ', 1)[0] if user_answer_raw and '. ' in user_answer_raw else user_answer_raw
+        print(user_answer)
         correct_answer_from_data = quiz_data["questions_data"][i]["correct_answer"]
-        if i < len(user_answers) and user_answers[i].strip().lower() == correct_answer_from_data.strip().lower():
+        if i < len(user_answers) and user_answer.strip().lower() == correct_answer_from_data.strip().lower():
             score += 1
 
     return {"score": score, "total_questions": len(correct_answers)}
