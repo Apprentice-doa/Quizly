@@ -1,19 +1,31 @@
 from fastapi import FastAPI, HTTPException
 from typing import List, Dict
+from fastapi.middleware.cors import CORSMiddleware
 from model import QuizParams, GeneratedQuizResponse, SubmitAnswerRequest, ScoreResponse, CorrectAnswersResponse
+from mangum import Mangum
 import uuid
 import boto3
 import json
 
-app = FastAPI()
 
+app = FastAPI()
 session = boto3.Session()
 bedrock = boto3.client(service_name='bedrock-runtime', region_name = "us-east-1" )
 modelId="anthropic.claude-3-5-sonnet-20240620-v1:0"
+handler = Mangum(app)
+
+# handle CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+    expose_headers=["*"],  # Expose all headers
+)
 
 # In-memory storage for generated quizzes (for simplicity)
 quiz_storage: Dict[str, Dict] = {}
-
 
 quiz_generation_tool = {
     "toolSpec": {

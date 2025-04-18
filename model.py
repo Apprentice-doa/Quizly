@@ -9,11 +9,13 @@ class QuizParams(BaseModel):
 class GeneratedQuestion(BaseModel):
     question: str
     options: List[str]
+    
 
 class GeneratedQuizResponse(BaseModel):
     quiz_id: str
     questions: List[GeneratedQuestion]
-
+    correct_answers: List[str]
+    explanations: List[str]
     
 class SubmitAnswerRequest(BaseModel):
     quiz_id: str
