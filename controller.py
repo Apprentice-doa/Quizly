@@ -1,12 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from typing import List, Dict
+from typing import Dict
 from fastapi.middleware.cors import CORSMiddleware
 from model import QuizParams, GeneratedQuizResponse, SubmitAnswerRequest, ScoreResponse, CorrectAnswersResponse
 from mangum import Mangum
 import uuid
 import boto3
-import json
-
 
 app = FastAPI()
 session = boto3.Session()
